@@ -11,9 +11,7 @@ def main():
         if not data:
             continue
             
-        print("received data: {}", data)    
-        if data == "PING":
-            connection.sendall(b"+PONG\r\n")
+        connection.sendall(b"+PONG\r\n")
 
 if __name__ == "__main__":
     main()
