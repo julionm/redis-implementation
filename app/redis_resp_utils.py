@@ -1,5 +1,14 @@
-def encode_resp_string (response: str) -> str:
+def encode_simple_string (response: str) -> str:
     return "+{arg}\r\n".format(arg=response)
 
-def get_resp_formatting (data: str) -> bytes:
-    return bytes(encode_resp_string(data), "utf-8")
+def encode_bulk_string (response: str) -> str:
+    if len(response) == 0:
+        return "$-1\r\n"
+
+    return "${}\r\n{}\r\n".format(len(response), response)
+
+def format_simple_string (data: str) -> bytes:
+    return bytes(encode_simple_string(data), "utf-8")
+
+def format_bulk_string (data: str) -> bytes:
+    return bytes(encode_bulk_string(data), "utf-8")

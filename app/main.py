@@ -3,7 +3,7 @@ import threading
 
 from parser.index import parse_command
 from parser.classes import RedisCommand
-from redis_resp_utils import get_resp_formatting
+from redis_resp_utils import format_simple_string, format_bulk_string
 
 def handle_connection (connection: socket.socket):
     while True:
@@ -14,15 +14,26 @@ def handle_connection (connection: socket.socket):
                 
         command: RedisCommand = parse_command(data)
 
+        store = dict()
+
         match (command.getCommand().lower()):
             case "echo":
-                connection.sendall(get_resp_formatting(command.getArgs()[0]))
+                connection.sendall(format_simple_string(command.getArgs()[0]))
             case "ping":
-                connection.sendall(get_resp_formatting("PONG"))
+                connection.sendall(format_simple_string("PONG"))
             case "set":
                 key = command.getArgs()[0]
                 value = command.getArgs()[1]
-                connection.sendall(get_resp_formatting("OK"))
+
+                store[key] = value
+
+                connection.sendall(format_simple_string("OK"))
+            case "get":
+                key = command.getArgs()[0]
+                value: str = store[key]
+
+                connection.sendall(format_bulk_string(value))
+
 
 def main():
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
