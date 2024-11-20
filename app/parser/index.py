@@ -1,5 +1,5 @@
 from typing import List
-from classes import *
+from app.parser.classes import *
 
 def parse_redis_bulk_string (chunks: List[str]) -> tuple[RedisToken, List[str]] | None:
     if chunks[0].startswith("*"):

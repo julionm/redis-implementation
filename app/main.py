@@ -1,9 +1,9 @@
 import socket  # noqa: F401
 import threading
 
-from parser.index import parse_command
-from parser.classes import RedisCommand
-from redis_resp_utils import format_simple_string, format_bulk_string
+from app.redis_resp_utils import format_simple_string, format_bulk_string
+from app.parser.index import parse_command
+from app.parser.classes import RedisCommand
 
 def handle_connection (connection: socket.socket):
     while True:
