@@ -37,7 +37,7 @@ class RedisArray(RedisToken):
         self.value = value
         self.size = size
 
-    def getValue (self):
+    def getValue (self) -> List[RedisToken]:
         return self.value
 
     def getSize (self):
@@ -69,7 +69,7 @@ class RedisString(RedisToken):
         self.value = value
         self.size = size
 
-    def getValue (self):
+    def getValue (self) -> str:
         return self.value
 
     def getSize (self):
@@ -86,6 +86,7 @@ class RedisString(RedisToken):
 
     def setType (self, type: RedisValues):
         self.type = type
+
 
 class RedisCommand:
     command = ""
@@ -141,12 +142,12 @@ def parse_redis_bulk_string (chunks: List[str]) -> tuple[RedisToken, List[str]] 
         return (None, chunks[1:])
 
 def parse_to_token (data: bytes) -> RedisToken:
-    encoded_data = data.encode("UTF-8")
+    encoded_data = data.decode("UTF-8")
     chunks = encoded_data.split("\r\n")
 
     (token, remaining_chunks) = parse_redis_bulk_string(chunks)
 
-    if remaining_chunks.count() == 0:
+    if len(remaining_chunks) == 0:
         print("parsing was completed")
     else:
         print("there's still some stuff to parse: {}", remaining_chunks)
@@ -154,17 +155,22 @@ def parse_to_token (data: bytes) -> RedisToken:
     return token
 
 def parse_command (token: RedisToken) -> RedisCommand:
-    if token.getType == RedisValues.ARRAY:
+    if token.getType() == RedisValues.ARRAY:
         children = token.getValue()
-        command = children[0]
-        arg = children[1]
+
+        command = children[0].getValue() if len(children) >= 1 and isinstance(children[0], RedisString) else "" 
+        arg = children[1].getValue() if len(children) >= 2 and isinstance(children[1], RedisString) else "" 
 
         return RedisCommand(command, arg)
     
-    elif token.getType == RedisValues.STRING:
+    elif token.getType() == RedisValues.STRING:
         command = token.getValue()
 
         return RedisCommand(command)
+    
+    else:
+        print("something went wrong")
+        return RedisCommand()
     
 def handle_connection (connection: socket.socket):
     while True:
@@ -178,7 +184,8 @@ def handle_connection (connection: socket.socket):
         match (command.getCommand().lower()):
             case "echo":
                 print("the sender sent an echo")
-                connection.sendall(bytes(command.getArg()))
+                response = "+{arg}\r\n"
+                connection.sendall(bytes(response.format(arg=command.getArg()), "utf-8"))
             case "ping":
                 print("the sender sent a ping")
                 connection.sendall(b"+PONG\r\n")
