@@ -1,10 +1,14 @@
 import socket  # noqa: F401
 import threading
 import time
+import argparse
+import sys
 
-from app.redis_resp_utils import format_simple_string, format_bulk_string
+from app.redis_resp_utils import format_simple_string, format_bulk_string, format_bulk_array
 from app.parser.index import parse_command
 from app.parser.classes import RedisCommand
+
+configuration = {}
 
 def handle_connection (connection: socket.socket):
     store = dict()
@@ -45,9 +49,37 @@ def handle_connection (connection: socket.socket):
                 value = res["value"] if res["expiry_date"] > time.time() else ""
 
                 connection.sendall(format_bulk_string(value))
+            case "config":
+                args = command.getArgs()
+                config_command = args[0]
+
+                match (config_command.lower()):
+                    case "get":
+                        key = args[1]
+                        value = configuration[key]
+
+                        connection.sendall(format_bulk_array([
+                            format_bulk_string(key),
+                            format_bulk_string(value)
+                        ]))
+
 
 
 def main():
+
+    parser = argparse.ArgumentParser(
+        prog="My Redis",
+        description="Crafted using a redids",
+        epilog="A program created by Julio Negri"
+    )
+
+    parser.add_argument("-dir", "--dir")
+    parser.add_argument("-dbfilename", "--dbfilename")
+
+    configuration = parser.parse_args(sys.argv[1:])
+
+    print(configuration)
+
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
 
     while True:
