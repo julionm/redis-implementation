@@ -27,8 +27,6 @@ class RedisToken:
 
 class RedisArray(RedisToken):
 
-    value = []
-    size = 0
     type = RedisValues.ARRAY
 
     def __init__ (self, value=[], size=0):
@@ -59,8 +57,6 @@ class RedisArray(RedisToken):
 
 class RedisString(RedisToken):
 
-    value = ""
-    size = 0
     type = RedisValues.STRING
 
     def __init__ (self, value="", size=0):
@@ -87,12 +83,10 @@ class RedisString(RedisToken):
 
 
 class RedisCommand:
-    command = ""
-    args = []
 
     def __init__ (self, command: str = "", args: List[str] = []):
         self.command = command
-        self.arg = args
+        self.args = args
 
     def getCommand (self):
         return self.command

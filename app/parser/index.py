@@ -4,10 +4,9 @@ from app.parser.classes import *
 def parse_redis_bulk_string (chunks: List[str]) -> tuple[RedisToken, List[str]] | None:
     if chunks[0].startswith("*"):
         # ? *2\r\n$5\r\nECHO\r\nhello\r\n
-    
         array_size = int(chunks[0][1:])
 
-        token = RedisArray(size=array_size)
+        token = RedisArray([], size=array_size)
 
         remaining_str = chunks[1:]
 
@@ -43,7 +42,7 @@ def parse_to_token (data: bytes) -> RedisToken:
 
     (token, remaining_chunks) = parse_redis_bulk_string(chunks)
 
-    if len(remaining_chunks) == 0:
+    if len(remaining_chunks) == 0 or remaining_chunks[0] == '':
         print("parsing was completed")
     else:
         print("there's still some stuff to parse: {}", remaining_chunks)
@@ -51,13 +50,13 @@ def parse_to_token (data: bytes) -> RedisToken:
     return token
 
 def parse_command (data: str) -> RedisCommand:
+    
     token = parse_to_token(data)
 
     if token.getType() == RedisValues.ARRAY:
         children = token.getValue()
-
         command = children[0].getValue() if len(children) >= 1 and isinstance(children[0], RedisString) else "" 
-        args = children[1].getValue() if len(children) >= 2 and isinstance(children[1], RedisString) else "" 
+        args = list(map(lambda v: v.getValue(), children[1:])) if len(children) >= 2 else []
 
         return RedisCommand(command, args)
     

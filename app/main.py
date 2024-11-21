@@ -6,6 +6,8 @@ from app.parser.index import parse_command
 from app.parser.classes import RedisCommand
 
 def handle_connection (connection: socket.socket):
+    store = dict()
+
     while True:
         data = connection.recv(1024)
         
@@ -13,8 +15,6 @@ def handle_connection (connection: socket.socket):
             return
                 
         command: RedisCommand = parse_command(data)
-
-        store = dict()
 
         match (command.getCommand().lower()):
             case "echo":
