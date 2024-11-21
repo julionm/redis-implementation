@@ -1,5 +1,6 @@
 import socket  # noqa: F401
 import threading
+import time
 
 from app.redis_resp_utils import format_simple_string, format_bulk_string
 from app.parser.index import parse_command
@@ -22,15 +23,26 @@ def handle_connection (connection: socket.socket):
             case "ping":
                 connection.sendall(format_simple_string("PONG"))
             case "set":
-                key = command.getArgs()[0]
-                value = command.getArgs()[1]
+                args = command.getArgs()
+                
+                key = args[0]
+                value = args[1]
 
-                store[key] = value
+                expiry_date = float('inf')
 
+                if len(args) > 2 and args[2].lower() == "px":
+                    expiry_date = time.time() + float(args[3]) / 1000
+
+                store[key] = {
+                    "value": value,
+                    "expiry_date": expiry_date 
+                }
+                
                 connection.sendall(format_simple_string("OK"))
             case "get":
                 key = command.getArgs()[0]
-                value: str = store[key]
+                res = store[key]
+                value = res["value"] if res["expiry_date"] > time.time() else ""
 
                 connection.sendall(format_bulk_string(value))
 
