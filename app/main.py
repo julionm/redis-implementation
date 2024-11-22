@@ -56,7 +56,13 @@ def handle_connection (connection: socket.socket):
                 match (config_command.lower()):
                     case "get":
                         key = args[1]
-                        value = configuration[key]
+                        value = ""
+
+                        match (key):
+                            case "dir":
+                                value = configuration.dir
+                            case "dbfilename":
+                                value = configuration.dbfilename
 
                         connection.sendall(format_bulk_array([
                             format_bulk_string(key),
@@ -77,8 +83,6 @@ def main():
     parser.add_argument("-dbfilename", "--dbfilename")
 
     configuration = parser.parse_args(sys.argv[1:])
-
-    print(configuration)
 
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
 
